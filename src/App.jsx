@@ -143,7 +143,7 @@ export default function App() {
             <div className="logo-circle">
               <div className="logo-hat"></div>
             </div>
-            <div className="logo-text">Lovejoys Quiz</div>
+            <div className="logo-text">Lovejoys Product Trainer</div>
           </div>
 
           <div className="scoreboard">
