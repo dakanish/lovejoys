@@ -22,11 +22,7 @@ function askAudience(correctIndex) {
   const correctVotes = Math.floor(totalVotes * 0.65);
   const remaining = totalVotes - correctVotes;
 
-  const rawWrong = [
-    Math.random(),
-    Math.random(),
-    Math.random(),
-  ];
+  const rawWrong = [Math.random(), Math.random(), Math.random()];
   const rawSum = rawWrong.reduce((a, b) => a + b, 0);
   const wrongVotes = rawWrong.map(v => Math.floor((v / rawSum) * remaining));
 
@@ -139,7 +135,8 @@ export default function App() {
     setUsedAudience(true);
   }
 
-  const isQuizFinished = currentIndex === PRODUCTS.length - 1 && hasAnsweredCorrectly;
+  const isQuizFinished =
+    currentIndex === PRODUCTS.length - 1 && hasAnsweredCorrectly;
 
   return (
     <div className="app">
@@ -245,11 +242,9 @@ export default function App() {
                 let stateClass = "";
 
                 if (isSelected) {
-                  if (answer.isCorrect) {
-                    stateClass = "answer-correct";
-                  } else {
-                    stateClass = "answer-wrong";
-                  }
+                  stateClass = answer.isCorrect
+                    ? "answer-correct"
+                    : "answer-wrong";
                 }
 
                 const labels = ["A", "B", "C", "D"];
@@ -264,9 +259,7 @@ export default function App() {
                     disabled={!isVisible}
                   >
                     <span className="answer-label">{labels[index]}</span>
-                    <span className="answer-text">
-                      Code {answer.code}
-                    </span>
+                    <span className="answer-text">{answer.code}</span>
                   </button>
                 );
               })}
@@ -278,7 +271,10 @@ export default function App() {
                   hasAnsweredCorrectly ? "" : "next-disabled"
                 }`}
                 onClick={handleNextQuestion}
-                disabled={!hasAnsweredCorrectly || currentIndex === PRODUCTS.length - 1}
+                disabled={
+                  !hasAnsweredCorrectly ||
+                  currentIndex === PRODUCTS.length - 1
+                }
               >
                 Next Question
               </button>
@@ -290,9 +286,11 @@ export default function App() {
               <div className="summary-box">
                 <h2 className="summary-title">Quiz Complete</h2>
                 <p className="summary-text">
-                  You answered <span className="summary-correct">{correctCount}</span>{" "}
-                  questions correctly and made{" "}
-                  <span className="summary-wrong">{wrongCount}</span> wrong guesses.
+                  You answered{" "}
+                  <span className="summary-correct">{correctCount}</span>{" "}
+                  correctly and made{" "}
+                  <span className="summary-wrong">{wrongCount}</span> wrong
+                  guesses.
                 </p>
 
                 {wrongDetails.length > 0 ? (
@@ -301,8 +299,10 @@ export default function App() {
                     <ul>
                       {wrongDetails.map((item, idx) => (
                         <li key={idx} className="summary-item">
-                          <span className="summary-product">{item.productName}</span>{" "}
-                          — Correct code:{" "}
+                          <span className="summary-product">
+                            {item.productName}
+                          </span>{" "}
+                          — Correct:{" "}
                           <span className="summary-code-correct">
                             {item.correctCode}
                           </span>{" "}
