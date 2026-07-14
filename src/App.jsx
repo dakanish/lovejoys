@@ -1,122 +1,171 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+import PRODUCTS from "./products"; // we will create this file next
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+// Utility: shuffle array
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
 }
 
-export default App
+// Generate 4 answer options (1 correct + 3 random real codes)
+function generateAnswers(correctCode, allProducts) {
+  const codes = allProducts.map(p => p.code);
+  const wrongCodes = shuffle(codes.filter(c => c !== correctCode)).slice(0, 3);
+  return shuffle([correctCode, ...wrongCodes]);
+}
+
+// Generate Ask the Audience results
+function askAudience(correctIndex) {
+  const totalVotes = 500;
+
+  // Audience gets correct answer 65% of the time
+  const correctVotes = Math.floor(totalVotes * 0.65);
+
+  // Remaining votes distributed randomly
+  const remaining = totalVotes - correctVotes;
+
+  const wrongVotes = [
+    Math.floor(Math.random() * remaining),
+    Math.floor(Math.random() * remaining),
+    Math.floor(Math.random() * remaining)
+  ];
+
+  // Normalize wrong votes to exactly remaining
+  const wrongTotal = wrongVotes.reduce((a, b) => a + b, 0);
+  const scale = remaining / wrongTotal;
+
+  const finalWrongVotes = wrongVotes.map(v => Math.floor(v * scale));
+
+  const results = [0, 0, 0, 0];
+  results[correctIndex] = correctVotes;
+
+  let wi = 0;
+  for (let i = 0; i < 4; i++) {
+    if (i !== correctIndex) {
+      results[i] = finalWrongVotes[wi++];
+    }
+  }
+
+  return results;
+}
+
+export default function App() {
+  const [step, setStep] = useState(0);
+  const [score, setScore] = useState(0);
+  const [finished, setFinished] = useState(false);
+
+  const [fiftyUsed, setFiftyUsed] = useState(false);
+  const [audienceUsed, setAudienceUsed] = useState(false);
+  const [audienceResults, setAudienceResults] = useState(null);
+
+  const product = PRODUCTS[step];
+  const answers = generateAnswers(product.code, PRODUCTS);
+  const correctIndex = answers.indexOf(product.code);
+
+  const [visibleAnswers, setVisibleAnswers] = useState([0, 1, 2, 3]);
+
+  function answer(index) {
+    if (index === correctIndex) {
+      setScore(score + 1);
+    }
+
+    if (step + 1 < PRODUCTS.length) {
+      setStep(step + 1);
+      setAudienceResults(null);
+      setVisibleAnswers([0, 1, 2, 3]);
+    } else {
+      setFinished(true);
+    }
+  }
+
+  function useFifty() {
+    if (fiftyUsed) return;
+
+    const wrongIndexes = visibleAnswers.filter(i => i !== correctIndex);
+    const removeTwo = shuffle(wrongIndexes).slice(0, 2);
+
+    setVisibleAnswers(visibleAnswers.filter(i => !removeTwo.includes(i)));
+    setFiftyUsed(true);
+  }
+
+  function useAudience() {
+    if (audienceUsed) return;
+
+    const results = askAudience(correctIndex);
+    setAudienceResults(results);
+    setAudienceUsed(true);
+  }
+
+  return (
+    <div className="lovejoys-container">
+      <h1 className="title">Lovejoys Product Code Quiz</h1>
+
+      {!finished ? (
+        <>
+          <div className="question-box">
+            <h2>What is the code for:</h2>
+            <h3 className="product-name">{product.name}</h3>
+          </div>
+
+          <div className="lifelines">
+            <button
+              className={`lifeline-btn ${fiftyUsed ? "disabled" : ""}`}
+              onClick={useFifty}
+            >
+              50/50
+            </button>
+
+            <button
+              className={`lifeline-btn ${audienceUsed ? "disabled" : ""}`}
+              onClick={useAudience}
+            >
+              Ask the Audience
+            </button>
+          </div>
+
+          {audienceResults && (
+            <div className="audience-box">
+              <h4>Audience Votes</h4>
+              {visibleAnswers.map(i => (
+                <p key={i}>
+                  Option {String.fromCharCode(65 + i)}: {audienceResults[i]} votes
+                </p>
+              ))}
+            </div>
+          )}
+
+          <div className="answers">
+            {visibleAnswers.map(i => (
+              <button
+                key={i}
+                onClick={() => answer(i)}
+                className="answer-btn"
+              >
+                {answers[i]}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="results">
+          <h2>Quiz Complete!</h2>
+          <p>You scored {score} out of {PRODUCTS.length}</p>
+          <button
+            className="restart-btn"
+            onClick={() => {
+              setStep(0);
+              setScore(0);
+              setFinished(false);
+              setFiftyUsed(false);
+              setAudienceUsed(false);
+              setAudienceResults(null);
+              setVisibleAnswers([0, 1, 2, 3]);
+            }}
+          >
+            Play Again
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
