@@ -15,8 +15,7 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--cream-bg);
   color: var(--text-dark);
 }
@@ -134,6 +133,18 @@ body {
   color: var(--white);
 }
 
+/* Wrong counter flash */
+
+.score-value.wrong.flash {
+  animation: wrongFlash 0.6s ease;
+}
+
+@keyframes wrongFlash {
+  0% { background: var(--red-wrong); }
+  50% { background: #ff6b6b; }
+  100% { background: var(--red-wrong); }
+}
+
 /* Main */
 
 .main {
@@ -204,19 +215,9 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
-.lifeline-btn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
 .lifeline-btn:disabled {
   opacity: 0.6;
   cursor: default;
-}
-
-.lifeline-used {
-  border-color: #999;
-  color: #777;
 }
 
 /* Audience Panel */
@@ -244,12 +245,6 @@ body {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
-}
-
-.audience-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .audience-circle {
@@ -302,8 +297,28 @@ body {
 .audience-chart {
   display: flex;
   justify-content: space-between;
-  align-items: flex
+  align-items: flex-end;
+  gap: 8px;
 }
+
+.audience-bar-wrapper {
+  width: 20%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.audience-bar {
+  width: 100%;
+  background: var(--gold);
+  border-radius: 6px 6px 0 0;
+}
+
+.audience-bar-label {
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+
 /* Answers */
 
 .answers {
@@ -328,24 +343,10 @@ body {
     border-color 0.2s ease;
 }
 
-.answer-btn:hover:not(:disabled) {
+.answer-btn:hover:not(.answer-hidden):not(.answer-correct):not(.answer-wrong) {
   background: var(--green-mid);
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-}
-
-.answer-btn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
-.answer-label {
-  font-weight: 700;
-}
-
-.answer-text {
-  flex: 1;
-  text-align: right;
 }
 
 .answer-hidden {
@@ -360,37 +361,20 @@ body {
 .answer-wrong {
   background: var(--red-wrong);
   border-color: var(--red-wrong);
+  animation: shake 0.4s ease, wrongHold 1s ease;
 }
 
-/* Controls */
-
-.controls {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
 }
 
-.next-btn {
-  padding: 8px 16px;
-  border-radius: 999px;
-  border: 2px solid var(--green-dark);
-  background: var(--white);
-  color: var(--green-dark);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-}
-
-.next-btn:hover:not(:disabled) {
-  background: #f0f5f2;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-}
-
-.next-btn:disabled,
-.next-disabled {
-  opacity: 0.5;
-  cursor: default;
+@keyframes wrongHold {
+  0% { background: var(--red-wrong); }
+  100% { background: var(--red-wrong); }
 }
 
 /* Summary */
@@ -401,99 +385,4 @@ body {
 
 .summary-box {
   background: var(--white);
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.summary-title {
-  margin: 0 0 8px;
-}
-
-.summary-text {
-  margin: 4px 0 12px;
-}
-
-.summary-correct {
-  color: var(--green-mid);
-  font-weight: 600;
-}
-
-.summary-wrong {
-  color: var(--red-wrong);
-  font-weight: 600;
-}
-
-.summary-list {
-  margin-top: 8px;
-}
-
-.summary-subtitle {
-  margin: 0 0 6px;
-}
-
-.summary-item {
-  font-size: 0.9rem;
-  margin-bottom: 4px;
-}
-
-.summary-product {
-  font-weight: 600;
-}
-
-.summary-code-correct {
-  color: var(--green-mid);
-  font-weight: 600;
-}
-
-.summary-code-wrong {
-  color: var(--red-wrong);
-  font-weight: 600;
-}
-
-/* Responsive */
-
-@media (max-width: 768px) {
-  .app-inner {
-    padding: 12px;
-  }
-
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .answers {
-    grid-template-columns: 1fr;
-  }
-
-  .audience-panel-visible {
-    max-height: 320px;
-  }
-
-  .audience-bar-wrapper {
-    height: 100px;
-  }
-}
-
-@media (max-width: 480px) {
-  .logo-text {
-    font-size: 0.9rem;
-  }
-
-  .question-text {
-    font-size: 0.95rem;
-  }
-
-  .lifeline-btn {
-    font-size: 0.85rem;
-  }
-
-  .answer-btn {
-    font-size: 0.9rem;
-  }
-
-  .audience-bar-wrapper {
-    height: 90px;
-  }
-}
+  border-radius: 16px
