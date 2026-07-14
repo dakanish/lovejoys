@@ -1,5 +1,5 @@
 const PRODUCTS = [
-  { name: "Limes", code: 176 },
+  { name: "Limes/Lemons", code: 176 },
   { name: "Cucumber", code: 90 },
   { name: "Cauliflower", code: 56 },
   { name: "Bananas", code: 25 },
