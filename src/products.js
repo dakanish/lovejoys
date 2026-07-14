@@ -1,5 +1,4 @@
 const PRODUCTS = [
-  { name: "Limes/Lemons", code: 176 },
   { name: "Cucumber", code: 90 },
   { name: "Cauliflower", code: 56 },
   { name: "Bananas", code: 25 },
@@ -150,6 +149,7 @@ const PRODUCTS = [
   { name: "Coriander (25g)", code: 156 },
   { name: "Curly Parsley (25g)", code: 2601 },
   { name: "Dill (25g)", code: 157 },
+  { name: "Limes/Lemons", code: 176 },
   { name: "Flat Parsley (25g)", code: 158 },
   { name: "Marjoram (25g)", code: 159 },
   { name: "Mint (25g)", code: 160 },
