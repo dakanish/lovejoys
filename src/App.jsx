@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import PRODUCTS from "./products";
 
@@ -21,41 +21,39 @@ export default function App() {
   const [audienceVisible, setAudienceVisible] = useState(false);
   const [audienceData, setAudienceData] = useState(null);
 
-const currentProduct = PRODUCTS[currentIndex];
+  const [answers, setAnswers] = useState([]);
 
-// Auto‑generate answers
-const answers = (() => {
-  // Correct answer
-  const correct = {
-    label: "A",
-    code: currentProduct.code,
-    isCorrect: true,
-  };
+  const currentProduct = PRODUCTS[currentIndex];
 
-  // All other product codes except the current one
-  const otherCodes = PRODUCTS
-    .filter((p, idx) => idx !== currentIndex)
-    .map(p => p.code);
+  // ⭐ Auto-generate answers ONLY when question changes
+  useEffect(() => {
+    const generateAnswers = () => {
+      const correct = {
+        label: "A",
+        code: currentProduct.code,
+        isCorrect: true,
+      };
 
-  // Shuffle them
-  const shuffled = otherCodes.sort(() => Math.random() - 0.5);
+      const otherCodes = PRODUCTS
+        .filter((p, idx) => idx !== currentIndex)
+        .map(p => p.code);
 
-  // Pick 3 wrong codes
-  const wrongCodes = shuffled.slice(0, 3);
+      const shuffled = otherCodes.sort(() => Math.random() - 0.5);
+      const wrongCodes = shuffled.slice(0, 3);
 
-  // Build wrong answers
-  const wrongAnswers = wrongCodes.map((code, i) => ({
-    label: ["B", "C", "D"][i],
-    code,
-    isCorrect: false,
-  }));
+      const wrongAnswers = wrongCodes.map((code, i) => ({
+        label: ["B", "C", "D"][i],
+        code,
+        isCorrect: false,
+      }));
 
-  // Combine and shuffle final answers
-  const finalAnswers = [correct, ...wrongAnswers].sort(() => Math.random() - 0.5);
+      const finalAnswers = [correct, ...wrongAnswers].sort(() => Math.random() - 0.5);
 
-  return finalAnswers;
-})();
+      setAnswers(finalAnswers);
+    };
 
+    generateAnswers();
+  }, [currentIndex]);
 
   function resetForNextQuestion(nextIndex) {
     setCurrentIndex(nextIndex);
@@ -67,7 +65,6 @@ const answers = (() => {
   }
 
   function handleAnswerClick(index) {
-    if (!visibleAnswers.includes(index)) return;
     const answer = answers[index];
 
     setSelectedIndex(index);
@@ -224,14 +221,14 @@ const answers = (() => {
                       </div>
                     </div>
 
-<div className="audience-chart">
-  {audienceData && audienceData.map((pct, i) => (
-    <div key={i} className="audience-bar-wrapper">
-      <div className="audience-bar" style={{ height: `${pct}%` }}></div>
-      <div className="audience-bar-label">{pct}%</div>
-    </div>
-  ))}
-</div>
+                    <div className="audience-chart">
+                      {audienceData && audienceData.map((pct, i) => (
+                        <div key={i} className="audience-bar-wrapper">
+                          <div className="audience-bar" style={{ height: `${pct}%` }}></div>
+                          <div className="audience-bar-label">{pct}%</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
