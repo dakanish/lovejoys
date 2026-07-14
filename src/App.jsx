@@ -21,8 +21,41 @@ export default function App() {
   const [audienceVisible, setAudienceVisible] = useState(false);
   const [audienceData, setAudienceData] = useState(null);
 
-  const currentProduct = PRODUCTS[currentIndex];
-  const answers = currentProduct.answers;
+const currentProduct = PRODUCTS[currentIndex];
+
+// Auto‑generate answers
+const answers = (() => {
+  // Correct answer
+  const correct = {
+    label: "A",
+    code: currentProduct.code,
+    isCorrect: true,
+  };
+
+  // All other product codes except the current one
+  const otherCodes = PRODUCTS
+    .filter((p, idx) => idx !== currentIndex)
+    .map(p => p.code);
+
+  // Shuffle them
+  const shuffled = otherCodes.sort(() => Math.random() - 0.5);
+
+  // Pick 3 wrong codes
+  const wrongCodes = shuffled.slice(0, 3);
+
+  // Build wrong answers
+  const wrongAnswers = wrongCodes.map((code, i) => ({
+    label: ["B", "C", "D"][i],
+    code,
+    isCorrect: false,
+  }));
+
+  // Combine and shuffle final answers
+  const finalAnswers = [correct, ...wrongAnswers].sort(() => Math.random() - 0.5);
+
+  return finalAnswers;
+})();
+
 
   function resetForNextQuestion(nextIndex) {
     setCurrentIndex(nextIndex);
