@@ -361,3 +361,139 @@ body {
   background: var(--red-wrong);
   border-color: var(--red-wrong);
 }
+
+/* Controls */
+
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.next-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 2px solid var(--green-dark);
+  background: var(--white);
+  color: var(--green-dark);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.next-btn:hover:not(:disabled) {
+  background: #f0f5f2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.next-btn:disabled,
+.next-disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Summary */
+
+.summary-section {
+  margin-top: 8px;
+}
+
+.summary-box {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.summary-title {
+  margin: 0 0 8px;
+}
+
+.summary-text {
+  margin: 4px 0 12px;
+}
+
+.summary-correct {
+  color: var(--green-mid);
+  font-weight: 600;
+}
+
+.summary-wrong {
+  color: var(--red-wrong);
+  font-weight: 600;
+}
+
+.summary-list {
+  margin-top: 8px;
+}
+
+.summary-subtitle {
+  margin: 0 0 6px;
+}
+
+.summary-item {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.summary-product {
+  font-weight: 600;
+}
+
+.summary-code-correct {
+  color: var(--green-mid);
+  font-weight: 600;
+}
+
+.summary-code-wrong {
+  color: var(--red-wrong);
+  font-weight: 600;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .app-inner {
+    padding: 12px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .answers {
+    grid-template-columns: 1fr;
+  }
+
+  .audience-panel-visible {
+    max-height: 320px;
+  }
+
+  .audience-bar-wrapper {
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-text {
+    font-size: 0.9rem;
+  }
+
+  .question-text {
+    font-size: 0.95rem;
+  }
+
+  .lifeline-btn {
+    font-size: 0.85rem;
+  }
+
+  .answer-btn {
+    font-size: 0.9rem;
+  }
+
+  .audience-bar-wrapper {
+    height: 90px;
+  }
+}
