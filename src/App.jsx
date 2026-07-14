@@ -1,171 +1,329 @@
 import { useState } from "react";
 import "./App.css";
-import PRODUCTS from "./products"; // we will create this file next
+import PRODUCTS from "./products";
 
-// Utility: shuffle array
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-// Generate 4 answer options (1 correct + 3 random real codes)
-function generateAnswers(correctCode, allProducts) {
+function generateAnswers(correctProduct, allProducts) {
+  const correctCode = correctProduct.code;
   const codes = allProducts.map(p => p.code);
   const wrongCodes = shuffle(codes.filter(c => c !== correctCode)).slice(0, 3);
-  return shuffle([correctCode, ...wrongCodes]);
+  const answers = shuffle([
+    { code: correctCode, isCorrect: true },
+    ...wrongCodes.map(code => ({ code, isCorrect: false })),
+  ]);
+  return answers;
 }
 
-// Generate Ask the Audience results
 function askAudience(correctIndex) {
   const totalVotes = 500;
-
-  // Audience gets correct answer 65% of the time
   const correctVotes = Math.floor(totalVotes * 0.65);
-
-  // Remaining votes distributed randomly
   const remaining = totalVotes - correctVotes;
 
-  const wrongVotes = [
-    Math.floor(Math.random() * remaining),
-    Math.floor(Math.random() * remaining),
-    Math.floor(Math.random() * remaining)
+  const rawWrong = [
+    Math.random(),
+    Math.random(),
+    Math.random(),
   ];
+  const rawSum = rawWrong.reduce((a, b) => a + b, 0);
+  const wrongVotes = rawWrong.map(v => Math.floor((v / rawSum) * remaining));
 
-  // Normalize wrong votes to exactly remaining
-  const wrongTotal = wrongVotes.reduce((a, b) => a + b, 0);
-  const scale = remaining / wrongTotal;
+  const votes = [0, 0, 0, 0];
+  votes[correctIndex] = correctVotes;
 
-  const finalWrongVotes = wrongVotes.map(v => Math.floor(v * scale));
-
-  const results = [0, 0, 0, 0];
-  results[correctIndex] = correctVotes;
-
-  let wi = 0;
+  let wrongIdx = 0;
   for (let i = 0; i < 4; i++) {
-    if (i !== correctIndex) {
-      results[i] = finalWrongVotes[wi++];
-    }
+    if (i === correctIndex) continue;
+    votes[i] = wrongVotes[wrongIdx++];
   }
 
-  return results;
+  const total = votes.reduce((a, b) => a + b, 0);
+  const diff = totalVotes - total;
+  votes[correctIndex] += diff;
+
+  const percentages = votes.map(v => Math.round((v / totalVotes) * 100));
+  return { votes, percentages };
 }
 
 export default function App() {
-  const [step, setStep] = useState(0);
-  const [score, setScore] = useState(0);
-  const [finished, setFinished] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState(() =>
+    generateAnswers(PRODUCTS[0], PRODUCTS)
+  );
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [hasAnsweredCorrectly, setHasAnsweredCorrectly] = useState(false);
 
-  const [fiftyUsed, setFiftyUsed] = useState(false);
-  const [audienceUsed, setAudienceUsed] = useState(false);
-  const [audienceResults, setAudienceResults] = useState(null);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [wrongDetails, setWrongDetails] = useState([]);
 
-  const product = PRODUCTS[step];
-  const answers = generateAnswers(product.code, PRODUCTS);
-  const correctIndex = answers.indexOf(product.code);
-
+  const [usedFifty, setUsedFifty] = useState(false);
   const [visibleAnswers, setVisibleAnswers] = useState([0, 1, 2, 3]);
 
-  function answer(index) {
-    if (index === correctIndex) {
-      setScore(score + 1);
-    }
+  const [audienceData, setAudienceData] = useState(null);
+  const [showAudiencePanel, setShowAudiencePanel] = useState(false);
+  const [usedAudience, setUsedAudience] = useState(false);
 
-    if (step + 1 < PRODUCTS.length) {
-      setStep(step + 1);
-      setAudienceResults(null);
-      setVisibleAnswers([0, 1, 2, 3]);
+  const currentProduct = PRODUCTS[currentIndex];
+
+  function resetForNextQuestion(nextIndex) {
+    const nextProduct = PRODUCTS[nextIndex];
+    const nextAnswers = generateAnswers(nextProduct, PRODUCTS);
+    setCurrentIndex(nextIndex);
+    setAnswers(nextAnswers);
+    setSelectedIndex(null);
+    setHasAnsweredCorrectly(false);
+    setUsedFifty(false);
+    setVisibleAnswers([0, 1, 2, 3]);
+    setAudienceData(null);
+    setShowAudiencePanel(false);
+    setUsedAudience(false);
+  }
+
+  function handleAnswerClick(index) {
+    if (!visibleAnswers.includes(index)) return;
+    const answer = answers[index];
+
+    setSelectedIndex(index);
+
+    if (answer.isCorrect) {
+      if (!hasAnsweredCorrectly) {
+        setCorrectCount(c => c + 1);
+        setHasAnsweredCorrectly(true);
+      }
     } else {
-      setFinished(true);
+      setWrongCount(w => w + 1);
+      setWrongDetails(list => [
+        ...list,
+        {
+          productName: currentProduct.name,
+          correctCode: currentProduct.code,
+          guessedCode: answer.code,
+        },
+      ]);
     }
   }
 
-  function useFifty() {
-    if (fiftyUsed) return;
+  function handleNextQuestion() {
+    if (!hasAnsweredCorrectly) return;
 
-    const wrongIndexes = visibleAnswers.filter(i => i !== correctIndex);
-    const removeTwo = shuffle(wrongIndexes).slice(0, 2);
+    if (currentIndex === PRODUCTS.length - 1) return;
 
-    setVisibleAnswers(visibleAnswers.filter(i => !removeTwo.includes(i)));
-    setFiftyUsed(true);
+    resetForNextQuestion(currentIndex + 1);
   }
 
-  function useAudience() {
-    if (audienceUsed) return;
+  function handleFiftyFifty() {
+    if (usedFifty) return;
 
-    const results = askAudience(correctIndex);
-    setAudienceResults(results);
-    setAudienceUsed(true);
+    const correctIdx = answers.findIndex(a => a.isCorrect);
+    const wrongIndices = answers
+      .map((a, i) => ({ a, i }))
+      .filter(item => !item.a.isCorrect)
+      .map(item => item.i);
+
+    const toKeepWrong = shuffle(wrongIndices).slice(0, 1);
+    const newVisible = [correctIdx, ...toKeepWrong].sort();
+    setVisibleAnswers(newVisible);
+    setUsedFifty(true);
   }
+
+  function handleAskAudience() {
+    if (usedAudience) return;
+
+    const correctIdx = answers.findIndex(a => a.isCorrect);
+    const data = askAudience(correctIdx);
+    setAudienceData(data);
+    setShowAudiencePanel(true);
+    setUsedAudience(true);
+  }
+
+  const isQuizFinished = currentIndex === PRODUCTS.length - 1 && hasAnsweredCorrectly;
 
   return (
-    <div className="lovejoys-container">
-      <h1 className="title">Lovejoys Product Code Quiz</h1>
-
-      {!finished ? (
-        <>
-          <div className="question-box">
-            <h2>What is the code for:</h2>
-            <h3 className="product-name">{product.name}</h3>
-          </div>
-
-          <div className="lifelines">
-            <button
-              className={`lifeline-btn ${fiftyUsed ? "disabled" : ""}`}
-              onClick={useFifty}
-            >
-              50/50
-            </button>
-
-            <button
-              className={`lifeline-btn ${audienceUsed ? "disabled" : ""}`}
-              onClick={useAudience}
-            >
-              Ask the Audience
-            </button>
-          </div>
-
-          {audienceResults && (
-            <div className="audience-box">
-              <h4>Audience Votes</h4>
-              {visibleAnswers.map(i => (
-                <p key={i}>
-                  Option {String.fromCharCode(65 + i)}: {audienceResults[i]} votes
-                </p>
-              ))}
+    <div className="app">
+      <div className="app-inner">
+        <header className="header">
+          <div className="logo-title">
+            <div className="logo-circle">
+              <div className="logo-hat" />
             </div>
-          )}
-
-          <div className="answers">
-            {visibleAnswers.map(i => (
-              <button
-                key={i}
-                onClick={() => answer(i)}
-                className="answer-btn"
-              >
-                {answers[i]}
-              </button>
-            ))}
+            <div className="logo-text">Lovejoys Product Code Quiz</div>
           </div>
-        </>
-      ) : (
-        <div className="results">
-          <h2>Quiz Complete!</h2>
-          <p>You scored {score} out of {PRODUCTS.length}</p>
-          <button
-            className="restart-btn"
-            onClick={() => {
-              setStep(0);
-              setScore(0);
-              setFinished(false);
-              setFiftyUsed(false);
-              setAudienceUsed(false);
-              setAudienceResults(null);
-              setVisibleAnswers([0, 1, 2, 3]);
-            }}
-          >
-            Play Again
-          </button>
-        </div>
-      )}
+          <div className="scoreboard">
+            <div className="score-item">
+              <span className="score-label">Correct Answers</span>
+              <span className="score-value correct">{correctCount}</span>
+            </div>
+            <div className="score-item">
+              <span className="score-label">Wrong Guesses</span>
+              <span className="score-value wrong">{wrongCount}</span>
+            </div>
+          </div>
+        </header>
+
+        <main className="main">
+          <section className="question-section">
+            <div className="question-box">
+              <div className="question-label">Question {currentIndex + 1}</div>
+              <div className="question-text">
+                What is the correct code for{" "}
+                <span className="question-product">{currentProduct.name}</span>?
+              </div>
+            </div>
+
+            <div className="lifelines">
+              <button
+                className={`lifeline-btn ${usedFifty ? "lifeline-used" : ""}`}
+                onClick={handleFiftyFifty}
+                disabled={usedFifty}
+              >
+                50 / 50
+              </button>
+              <button
+                className={`lifeline-btn ${usedAudience ? "lifeline-used" : ""}`}
+                onClick={handleAskAudience}
+                disabled={usedAudience}
+              >
+                Ask the Audience
+              </button>
+            </div>
+
+            <div
+              className={`audience-panel ${
+                showAudiencePanel ? "audience-panel-visible" : ""
+              }`}
+            >
+              {audienceData && (
+                <div className="audience-inner">
+                  <div className="audience-header">
+                    <div className="audience-icon">
+                      <div className="audience-circle">
+                        <div className="audience-people" />
+                      </div>
+                    </div>
+                    <div className="audience-title">Ask the Audience</div>
+                    <div className="audience-subtitle">
+                      Total votes: 500 • Correct answer favoured
+                    </div>
+                  </div>
+                  <div className="audience-chart">
+                    {audienceData.percentages.map((pct, i) => {
+                      const labels = ["A", "B", "C", "D"];
+                      const isVisible = visibleAnswers.includes(i);
+                      return (
+                        <div
+                          key={i}
+                          className={`audience-bar-group ${
+                            isVisible ? "" : "audience-bar-hidden"
+                          }`}
+                        >
+                          <div className="audience-bar-wrapper">
+                            <div
+                              className="audience-bar"
+                              style={{ height: `${pct}%` }}
+                            >
+                              <div className="audience-bar-top" />
+                            </div>
+                          </div>
+                          <div className="audience-bar-label">
+                            {labels[i]} • {pct}%
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="answers">
+              {answers.map((answer, index) => {
+                const isVisible = visibleAnswers.includes(index);
+                const isSelected = selectedIndex === index;
+                let stateClass = "";
+
+                if (isSelected) {
+                  if (answer.isCorrect) {
+                    stateClass = "answer-correct";
+                  } else {
+                    stateClass = "answer-wrong";
+                  }
+                }
+
+                const labels = ["A", "B", "C", "D"];
+
+                return (
+                  <button
+                    key={index}
+                    className={`answer-btn ${
+                      isVisible ? "" : "answer-hidden"
+                    } ${stateClass}`}
+                    onClick={() => handleAnswerClick(index)}
+                    disabled={!isVisible}
+                  >
+                    <span className="answer-label">{labels[index]}</span>
+                    <span className="answer-text">
+                      Code {answer.code}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="controls">
+              <button
+                className={`next-btn ${
+                  hasAnsweredCorrectly ? "" : "next-disabled"
+                }`}
+                onClick={handleNextQuestion}
+                disabled={!hasAnsweredCorrectly || currentIndex === PRODUCTS.length - 1}
+              >
+                Next Question
+              </button>
+            </div>
+          </section>
+
+          {isQuizFinished && (
+            <section className="summary-section">
+              <div className="summary-box">
+                <h2 className="summary-title">Quiz Complete</h2>
+                <p className="summary-text">
+                  You answered <span className="summary-correct">{correctCount}</span>{" "}
+                  questions correctly and made{" "}
+                  <span className="summary-wrong">{wrongCount}</span> wrong guesses.
+                </p>
+
+                {wrongDetails.length > 0 ? (
+                  <div className="summary-list">
+                    <h3 className="summary-subtitle">You got these wrong:</h3>
+                    <ul>
+                      {wrongDetails.map((item, idx) => (
+                        <li key={idx} className="summary-item">
+                          <span className="summary-product">{item.productName}</span>{" "}
+                          — Correct code:{" "}
+                          <span className="summary-code-correct">
+                            {item.correctCode}
+                          </span>{" "}
+                          • You guessed:{" "}
+                          <span className="summary-code-wrong">
+                            {item.guessedCode}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="summary-text">
+                    You didn’t get any products wrong — nice work.
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
