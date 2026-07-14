@@ -191,14 +191,14 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="audience-chart">
-                      {audienceData.map((pct, i) => (
-                        <div key={i} className="audience-bar-wrapper">
-                          <div className="audience-bar" style={{ height: `${pct}%` }}></div>
-                          <div className="audience-bar-label">{pct}%</div>
-                        </div>
-                      ))}
-                    </div>
+<div className="audience-chart">
+  {audienceData && audienceData.map((pct, i) => (
+    <div key={i} className="audience-bar-wrapper">
+      <div className="audience-bar" style={{ height: `${pct}%` }}></div>
+      <div className="audience-bar-label">{pct}%</div>
+    </div>
+  ))}
+</div>
                   </div>
                 )}
               </div>
